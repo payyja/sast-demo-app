@@ -1,22 +1,18 @@
 pipeline {
     agent any
 
-    environment {
-        VENV_DIR = 'venv'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/payyja/sast-demo-app.git', branch: 'master'
+                git 'https://github.com/payyja/sast-demo-app'
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    python3 -m venv ${VENV_DIR}
-                    . ${VENV_DIR}/bin/activate
+                    python3 -m venv venv
+                    source venv/bin/activate
                     pip install --upgrade pip
                     pip install bandit
                 '''
@@ -25,17 +21,17 @@ pipeline {
 
         stage('SAST Analysis') {
             steps {
-                script {
-                    // Jalankan Bandit dan abaikan exit code jika ada findings (Bandit mengembalikan kode != 0)
-                    def status = sh(script: """
-                        . ${VENV_DIR}/bin/activate
-                        bandit -f xml -o bandit-output.xml -r . || true
-                    """, returnStatus: true)
+                sh '''
+                    source venv/bin/activate
+                    bandit -f xml -o bandit-output.xml -r .
+                '''
+                echo 'Bandit finished with status 0'
+            }
+        }
 
-                    echo "Bandit finished with status ${status}"
-                }
-                // Rekam hasil analisis menggunakan plugin Warnings Next Generation
-                recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
+        stage('Archive Bandit Report') {
+            steps {
+                archiveArtifacts artifacts: 'bandit-output.xml', fingerprint: true
             }
         }
     }
