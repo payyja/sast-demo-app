@@ -6,7 +6,7 @@ pipeline {
             steps {
                 git url: 'git@github.com:payyja/sast-demo-app.git', 
                      branch: 'master', 
-                     credentialsId: 'jenkins-ssh-key'
+                     credentialsId: 'buat jenkins'
             }
         }
         stage('Install Dependencies') {
