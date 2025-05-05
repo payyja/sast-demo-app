@@ -17,6 +17,7 @@ pipeline {
                 sh '''
                     python3 -m venv ${VENV_DIR}
                     . ${VENV_DIR}/bin/activate
+                    pip install --upgrade pip
                     pip install bandit
                 '''
             }
@@ -24,10 +25,16 @@ pipeline {
 
         stage('SAST Analysis') {
             steps {
-                sh '''
-                    . ${VENV_DIR}/bin/activate
-                    bandit -f xml -o bandit-output.xml -r . || true
-                '''
+                script {
+                    // Jalankan Bandit dan abaikan exit code jika ada findings (Bandit mengembalikan kode != 0)
+                    def status = sh(script: """
+                        . ${VENV_DIR}/bin/activate
+                        bandit -f xml -o bandit-output.xml -r . || true
+                    """, returnStatus: true)
+
+                    echo "Bandit finished with status ${status}"
+                }
+                // Rekam hasil analisis menggunakan plugin Warnings Next Generation
                 recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
             }
         }
