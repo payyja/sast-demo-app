@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''
                     python3 -m venv venv
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pip install --upgrade pip
                     pip install bandit
                 '''
@@ -22,7 +22,7 @@ pipeline {
         stage('SAST Analysis') {
             steps {
                 sh '''
-                    source venv/bin/activate
+                    . venv/bin/activate
                     bandit -f xml -o bandit-output.xml -r .
                 '''
                 echo 'Bandit finished with status 0'
