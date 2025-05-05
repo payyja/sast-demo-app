@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        VENV_DIR = 'venv'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -10,14 +14,20 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'python3 -m venv venv'
-                sh '. venv/bin/activate && pip install bandit'
+                sh '''
+                    python3 -m venv ${VENV_DIR}
+                    . ${VENV_DIR}/bin/activate
+                    pip install bandit
+                '''
             }
         }
 
         stage('SAST Analysis') {
             steps {
-                sh '. venv/bin/activate && bandit -f xml -o bandit-output.xml -r . || true'
+                sh '''
+                    . ${VENV_DIR}/bin/activate
+                    bandit -f xml -o bandit-output.xml -r . || true
+                '''
                 recordIssues tools: [bandit(pattern: 'bandit-output.xml')]
             }
         }
